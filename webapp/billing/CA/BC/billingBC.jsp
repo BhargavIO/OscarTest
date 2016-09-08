@@ -35,7 +35,7 @@
 <%@ page import="org.springframework.web.context.WebApplicationContext"%>
 <%@ page import="org.springframework.web.context.support.WebApplicationContextUtils"%>
 <%@page import="oscar.oscarDemographic.data.*"%>
-<%@page import="java.text.*, java.util.*, oscar.oscarBilling.ca.bc.data.*,oscar.oscarBilling.ca.bc.pageUtil.*,oscar.*,oscar.entities.*"%>
+<%@page import="java.text.*, java.util.*,java.lang.*, oscar.oscarBilling.ca.bc.data.*,oscar.oscarBilling.ca.bc.pageUtil.*,org.oscarehr.common.model.Appointment,oscar.*,oscar.entities.*"%>
 <%!
   public void fillDxcodeList(BillingFormData.BillingService[] servicelist, Map dxcodeList) {
     for (int i = 0; i < servicelist.length; i++) {
@@ -72,14 +72,23 @@
   int month = 0; //Integer.parseInt(request.getParameter("month"));
   //int day = now.get(Calendar.DATE);
   int delta = 0; //request.getParameter("delta")==null?0:Integer.parseInt(request.getParameter("delta")); //add or minus month
+  String serviceYear="";
+  String starttime="";
+  String endtime="";
+  String year_of_birth="";
+  String month_of_birth="";
+  String date_of_birth="";
+  int age=0;
   GregorianCalendar now = new GregorianCalendar();
   year = now.get(Calendar.YEAR);
   month = now.get(Calendar.MONTH) + 1;
   String sxml_location = "", sxml_provider = "", sxml_visittype = "";
   String color = "", colorflag = "";
+
   BillingSessionBean bean = (BillingSessionBean) pageContext.findAttribute("billingSessionBean");
   oscar.oscarDemographic.data.DemographicData demoData = new oscar.oscarDemographic.data.DemographicData();
   org.oscarehr.common.model.Demographic demo = demoData.getDemographic(bean.getPatientNo());
+
   oscar.oscarBilling.ca.bc.MSP.ServiceCodeValidationLogic lgc = new oscar.oscarBilling.ca.bc.MSP.ServiceCodeValidationLogic();
   BillingFormData billform = new BillingFormData();
   BillingFormData.BillingService[] billlist1 = lgc.filterServiceCodeList(billform.getServiceList("Group1", bean.getBillForm(), bean.getBillRegion(),new Date()), demo);
@@ -128,10 +137,19 @@
 <script type="text/javascript" src="../../../share/javascript/prototype.js"></script>
 <script type="text/javascript" src="../../../share/javascript/Oscar.js"></script>
 <script type="text/javascript" src="../../../share/javascript/boxover.js"></script>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
-$(document).ready(function() {    
+<%
+starttime=request.getParameter("start_time");
+endtime=request.getParameter("end_time");
 
+%>
+$(document).ready(function() {    
+var starttime="<%=starttime%>";
+var endtime="<%=endtime%>";
+$("#start_time").val(starttime);
+$("#end_time").val(endtime);
 $('#tabs li a:not(:first)').addClass('inactive');
 $('.container').hide();
 $('.container:first').show();
@@ -153,7 +171,7 @@ $('#tabs li a').click(function(){
 <style>
 
 *{
-  font-size:14px;
+	font-size:14px;
   color:black;
   font-family: Verdana, helvetica, sans-serif;
 
@@ -178,29 +196,35 @@ body{
 
   }
   select{
-   
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  -ms-appearance: none;
-  -o-appearance: none;
-  appearance:none;
-  background:white;
-  background-image: url(../../../images/dropdown_arrow.png);
-      background-position:center right ;
-      background-repeat:no-repeat;
+	 
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-ms-appearance: none;
+	-o-appearance: none;
+	appearance:none;
+	background:white;
+	background-image: url(../../../images/dropdown_arrow.png);
+			background-position:center right ;
+			background-repeat:no-repeat;
     background-size: 17px 17px;
-    border-radius: 5px;
+
     padding: 3px;
     padding-right: 20px;
     margin:2px;
     border: 1px solid rgba(0, 0, 0, 0.27);
   }
   .compress{
-  width:100px;
+  width:129px;
 }
+input[type="text"],textarea{
+border: 1px solid rgba(0, 0, 0, 0.27);
+padding:2px 5px;
+margin-left:2px;
+}
+
   select:focus,input[type="text"]:focus,textarea:focus{
-    box-shadow:0px 0px 3px 1px #259df8;
-  
+	  box-shadow:0px 0px 3px 1px #259df8;
+    border: 1px solid rgba(0,0,0,.5);
   }
   input[type="submit"], input[type="button"] {
     padding: 5px 10px;
@@ -218,12 +242,12 @@ a{
 }
 #tabs {
 
-   width: 50%;
+   width: 35%;
     height:30px; 
    border-bottom: solid 1px #CCC;
    padding-right: 2px;
-   margin-top: 30px;
    
+   padding: 0;
 
 }
 a {cursor:pointer;}
@@ -234,10 +258,10 @@ a {cursor:pointer;}
     border-top:1px solid #ccc; 
     border-left:1px solid #ccc; 
     border-right:1px solid #ccc; 
-    margin-right:5px; 
+    
     border-top-left-radius:3px;  
     border-top-right-radius:3px;
-      outline:none;
+    outline:none;
 }
 
 #tabs li a {
@@ -281,12 +305,12 @@ a {cursor:pointer;}
 .container {
 
     float:left;           
-    width:48%; 
+    width:40%; 
       border-right: solid 1px #CCC;
   border-bottom: solid 1px #CCC;
     text-align:left;
   padding: 20px;
-  margin:20px;
+  
 }
 
 .container h2 { margin-left: 15px;  margin-right: 15px;  margin-bottom: 10px; color: #5685bc; }
@@ -297,6 +321,9 @@ a {cursor:pointer;}
 
 .container li { padding-bottom: 5px; margin-left: 5px;}
 
+.services td{
+  width:20%;
+}
 </style>
 <script language="JavaScript">
 
@@ -305,10 +332,15 @@ a {cursor:pointer;}
 <%=createAssociationJS(supDao.getAssociationKeyValues(),"trayAssocCodes")%>
 
 
+function changeValue(textId){
+  var txtId=textId;
+
+  $("#"+txtId).val("0.5");
+}
 
 function codeEntered(svcCode){
-  myform = document.forms[0];
-  return((myform.xml_other1.value == svcCode)||(myform.xml_other2.value == svcCode)||(myform.xml_other3.value == svcCode))
+	myform = document.forms[0];
+	return((myform.xml_other1.value == svcCode)||(myform.xml_other2.value == svcCode)||(myform.xml_other3.value == svcCode))
 }
 function addSvcCode(svcCode) {
     myform = document.forms[0];
@@ -387,20 +419,20 @@ function checkSelectedCodes(){
 
 
 function HideElementById(ele){
-  document.getElementById(ele).style.display='none';
+	document.getElementById(ele).style.display='none';
 }
 
 function ShowElementById(ele){
-  document.getElementById(ele).style.display='';
+	document.getElementById(ele).style.display='';
 }
 function CheckType(){
-  if (document.BillingCreateBillingForm.xml_billtype.value == "ICBC"){
-    ShowElementById('ICBC');
-    document.BillingCreateBillingForm.mva_claim_code.options[1].selected = true;
-  }else{
-    HideElementById('ICBC');
-    document.BillingCreateBillingForm.mva_claim_code.options[0].selected = true;
-  }
+	if (document.BillingCreateBillingForm.xml_billtype.value == "ICBC"){
+		ShowElementById('ICBC');
+		document.BillingCreateBillingForm.mva_claim_code.options[1].selected = true;
+	}else{
+		HideElementById('ICBC');
+		document.BillingCreateBillingForm.mva_claim_code.options[0].selected = true;
+	}
          toggleWCB();
 
 
@@ -471,23 +503,23 @@ function gotoPrivate(){
 }
 
 function correspondenceNote(){
-  if (document.BillingCreateBillingForm.correspondenceCode.value == "0" ){
-    HideElementById('CORRESPONDENCENOTE');
-  }else if (document.BillingCreateBillingForm.correspondenceCode.value == "C" ){
-    HideElementById('CORRESPONDENCENOTE');
-  }else if (document.BillingCreateBillingForm.correspondenceCode.value == "N" ){
-    ShowElementById('CORRESPONDENCENOTE');
-  }else {(document.BillingCreateBillingForm.correspondenceCode.value == "B" )
+	if (document.BillingCreateBillingForm.correspondenceCode.value == "0" ){
+		HideElementById('CORRESPONDENCENOTE');
+	}else if (document.BillingCreateBillingForm.correspondenceCode.value == "C" ){
+		HideElementById('CORRESPONDENCENOTE');
+	}else if (document.BillingCreateBillingForm.correspondenceCode.value == "N" ){
+	  ShowElementById('CORRESPONDENCENOTE');
+	}else {(document.BillingCreateBillingForm.correspondenceCode.value == "B" )
      ShowElementById('CORRESPONDENCENOTE');
-  }
+	}
 }
 
 function checkFACILITY(){
-  if (document.getElementById('FACILITY').style.display == 'none'){
-    ShowElementById('FACILITY');
-  }else{
-    HideElementById('FACILITY');
-  }
+	if (document.getElementById('FACILITY').style.display == 'none'){
+		ShowElementById('FACILITY');
+	}else{
+		HideElementById('FACILITY');
+	}
 }
 
 
@@ -495,15 +527,15 @@ function checkFACILITY(){
 
 function quickPickDiagnostic(diagnos){
 
-  if (document.BillingCreateBillingForm.xml_diagnostic_detail1.value == ""){
-    document.BillingCreateBillingForm.xml_diagnostic_detail1.value = diagnos;
+	if (document.BillingCreateBillingForm.xml_diagnostic_detail1.value == ""){
+		document.BillingCreateBillingForm.xml_diagnostic_detail1.value = diagnos;
         }else if ( document.BillingCreateBillingForm.xml_diagnostic_detail2.value == ""){
-    document.BillingCreateBillingForm.xml_diagnostic_detail2.value= diagnos;
-  }else if ( document.BillingCreateBillingForm.xml_diagnostic_detail3.value == "" ){
-    document.BillingCreateBillingForm.xml_diagnostic_detail3.value = diagnos;
-  }else{
-    alert("All of the Diagnostic Coding Boxes are full");
-  }
+		document.BillingCreateBillingForm.xml_diagnostic_detail2.value= diagnos;
+	}else if ( document.BillingCreateBillingForm.xml_diagnostic_detail3.value == "" ){
+		document.BillingCreateBillingForm.xml_diagnostic_detail3.value = diagnos;
+	}else{
+		alert("All of the Diagnostic Coding Boxes are full");
+	}
 }
 
 function isNumeric(strString){
@@ -521,24 +553,24 @@ function isNumeric(strString){
    }
 
 function checkUnits(){
-  if  (!isNumeric(document.BillingCreateBillingForm.xml_other1_unit.value)){
-    alert("Units have be of numeric value");
-          document.BillingCreateBillingForm.xml_other1_unit.focus();
-    return false;
-  }else if (!isNumeric(document.BillingCreateBillingForm.xml_other2_unit.value)){
-    alert("Units have be of numeric value");
+	if  (!isNumeric(document.BillingCreateBillingForm.xml_other1_unit.value)){
+		alert("Units have be of numeric value");
+	        document.BillingCreateBillingForm.xml_other1_unit.focus();
+		return false;
+	}else if (!isNumeric(document.BillingCreateBillingForm.xml_other2_unit.value)){
+		alert("Units have be of numeric value");
                 document.BillingCreateBillingForm.xml_other2_unit.focus();
                 return false;
-  }else if (!isNumeric(document.BillingCreateBillingForm.xml_other3_unit.value)){
-    alert("Units have be of numeric value");
+	}else if (!isNumeric(document.BillingCreateBillingForm.xml_other3_unit.value)){
+		alert("Units have be of numeric value");
                 document.BillingCreateBillingForm.xml_other3_unit.focus();
                 return false;
-  }else if (document.BillingCreateBillingForm.xml_provider.value == "000000"){
-     alert("Please select a Billing Physician");
-     document.BillingCreateBillingForm.xml_provider.focus();
-     return false;
-  }
-  return true;
+	}else if (document.BillingCreateBillingForm.xml_provider.value == "000000"){
+	   alert("Please select a Billing Physician");
+	   document.BillingCreateBillingForm.xml_provider.focus();
+	   return false;
+	}
+	return true;
 
 }
 
@@ -553,9 +585,9 @@ function checkTextLimit(textField, maximumlength) {
 
 
 function setfocus() {
-      //document.serviceform.xml_diagnostic_code.focus();
-      //document.serviceform.xml_diagnostic_code.select();
-    }
+		  //document.serviceform.xml_diagnostic_code.focus();
+		  //document.serviceform.xml_diagnostic_code.select();
+		}
 
 function RecordAttachments(Files, File0, File1, File2) {
   window.document.serviceform.elements["File0Data"].value = File0;
@@ -662,16 +694,16 @@ function findObj(n, d) { //v4.0
   if(!x && document.getElementById) x=document.getElementById(n); return x;
 }
 function getOffsetLeft (el) {
-  var ol=el.offsetLeft;
-  while ((el=el.offsetParent) != null) { ol += el.offsetLeft; }
-  return ol;
-  }
+	var ol=el.offsetLeft;
+	while ((el=el.offsetParent) != null) { ol += el.offsetLeft; }
+	return ol;
+	}
 
 function getOffsetTop (el) {
-  var ot=el.offsetTop;
-  while((el=el.offsetParent) != null) { ot += el.offsetTop; }
-  return ot;
-  }
+	var ot=el.offsetTop;
+	while((el=el.offsetParent) != null) { ot += el.offsetTop; }
+	return ot;
+	}
 var objPopup = null;
 var shim = null;
 function formPopup(event,objectId){
@@ -762,10 +794,12 @@ function checkifSet(icd9,feeitem,extrafeeitem){
    oscarLog("extra feeitem did put"+codeEntered(extrafeeitem));
 }
 
-
+function appendText() {
+ $("#premium").append('<tr><td nowrap>   <input type="text"  size="20" />                            <input type="button" value=".5" /></td><td>      <input type="text"  size="6" maxlength="6" />                      </td></tr>');
+                          }
 
 </script>
-<link rel="stylesheet" href="../billing/billing.css" type="text/css">
+<link rel="stylesheet" href="../billing.css" type="text/css">
 </head>
 <%!
   /**
@@ -933,12 +967,13 @@ if(wcbneeds != null){%>
                 <b><bean:message key="billing.patient"/></b>:
             </td>
             <td>
-                <u><%=demo.getLastName()%>,<%=demo.getFirstName()%></u>
+                <u><%=demo.getLastName()%>, <%=demo.getFirstName()%></u>
                 <a href="javascript: void();" onclick="popup(800, 1000, 'billStatus.jsp?lastName=<%=demo.getLastName()%>&firstName=<%=demo.getFirstName()%>&filterPatient=true&demographicNo=<%=demo.getDemographicNo()%>','InvoiceList');return false;">
-        <bean:message key="demographic.demographiceditdemographic.msgInvoiceList"/></a>
+				<bean:message key="demographic.demographiceditdemographic.msgInvoiceList"/></a>
             </td>
             <td>
-                <b><bean:message key="billing.patient.status"/>:<%=demo.getPatientStatus()%></b>    &nbsp;&nbsp;&nbsp;&nbsp;
+                <b><bean:message key="billing.patient.status"/>:</b></td><td><span><%=demo.getPatientStatus()%>
+                </span>    </td><td>
                 <b><bean:message key="billing.patient.roster"/>:<%=demo.getRosterStatus()%></b>
             </td>
             <td width="">
@@ -955,10 +990,40 @@ if(wcbneeds != null){%>
                 <b><bean:message key="billing.patient.age"/>:</b>
             </td>
             <td>
-             <%=demo.getAge()%> 
+           
+            <%              
+
+
+    serviceYear=thisForm.getXml_appointment_date();
+
+   String[] servicedate= serviceYear.split("-");
+
+    year_of_birth=demo.getYearOfBirth();
+    month_of_birth=demo.getMonthOfBirth();
+    date_of_birth=demo.getDateOfBirth();
+
+  int curYear = Integer.parseInt(servicedate[0]);
+  int curMonth = Integer.parseInt(servicedate[1]);
+  int curDay = Integer.parseInt(servicedate[2]);
+ 
+
+
+  if(curMonth>Integer.parseInt(month_of_birth) ) {
+    age=curYear-Integer.parseInt(year_of_birth);
+  } else {
+    if(curMonth==Integer.parseInt(month_of_birth) && curDay>Integer.parseInt(date_of_birth)) {
+      age=curYear-Integer.parseInt(year_of_birth);
+    } else {
+      age=curYear-Integer.parseInt(year_of_birth)-1; 
+    }
+  } 
+  
+
+  %>   
+            <span><%=age%></span>
             </td>
             <td  >
-                <a href="#" id="pop1" onClick="formPopup(this.id,'Layer1');return false;"><b><bean:message key="billing.billingform"/></b></a>:<%=billform.getBillingFormDesc(billformlist, bean.getBillForm())%>              
+                <a href="#" id="pop1" onClick="formPopup(this.id,'Layer1');return false;"><b><bean:message key="billing.billingform"/></b></a>:</td><td<%=billform.getBillingFormDesc(billformlist, bean.getBillForm())%>              
             </td>
             <td width="" >  
                   <b><bean:message key="billing.provider.billProvider"/></b>
@@ -976,7 +1041,7 @@ if(wcbneeds != null){%>
           </tr>
           <tr>
             <td>
-                  <bean:message key="billing.billingtype"/>
+                 <b> <bean:message key="billing.billingtype"/></b>
             </td>
             <td width="">
                 <html:select property="xml_billtype" onchange="CheckType();gotoPrivate();">
@@ -989,11 +1054,13 @@ if(wcbneeds != null){%>
             </td>
             <td width="">
                 <b>Clarification Code:</b>
+                </td><td>
                 <html:select property="xml_location" styleClass="compress">
                 <%
                   for (int i = 0; i < billlocation.length; i++) {
                     String locationDescription = billlocation[i].getBillingLocation() + "|" + billlocation[i].getDescription();
                 %>
+
                   <html:option value="<%=locationDescription%>"><%=billlocation[i].getDescription()%>                  </html:option>
                 <%}                %>
                 </html:select>            
@@ -1012,79 +1079,76 @@ if(wcbneeds != null){%>
                 </html:select>
             </td>
           </tr>
-        </table>
-        <!--
-          <table>
-          <tr>
-          <td>Service Date:</td>    <td>   Service to date: </td>  <td>    After Hours: </td>  <td>  Time Call (HHMM 24hr): </td>  <td>    Start (HHMM 24hr): </td>  <td>    End (HHMM 24hr): </td>   <td>   Dependent: </td>  <td>  Sub Code: </td>  <td>   Alt. Payment:</td>
-          </tr>
-          </table>
-        -->
-        <table width="100%" border=0>
           <tr>
             <td>
               <a href="javascript: function myFunction() {return false; }" id="hlSDate">
                   <strong><bean:message key="billing.servicedate"/>:</strong>
               </a>
+              </td><td>
+
               <html:text property="xml_appointment_date" size="10" readonly="true" styleId="xml_appointment_date"/>
               <!--<a id="hlSDate"><img title="Calendar" src="../../../images/cal.gif" alt="Calendar" border="0" /></a>-->
-            </td>
-            <td>
-              <a href="javascript: function myFunction() {return false; }" id="serviceToDate">
+              </br>
+              </td><td>
+               <a href="javascript: function myFunction() {return false; }" id="serviceToDate">
                   <strong>Service to date:</strong>
               </a>
+              </td><td>
               <html:text property="service_to_date" size="2" maxlength="2" styleId="service_to_date"/>
             </td>
-            <td>              After Hours:
+          
+            <td>             <strong> After Hours:<strong></td><td>
               <html:select property="afterHours">
                 <html:option value="0">No</html:option>
                 <html:option value="E">Evening</html:option>
                 <html:option value="N">Night</html:option>
                 <html:option value="W">Weekend</html:option>
               </html:select>
-            </td>
-            <td title="(HHMM 24hr):">
+            </tr>
+            <tr>
+            <td>
                 <strong>Time Call:</strong>
+                </td><td>
               <html:text property="timeCall" size="4" maxlength="4"/>
             </td>
+         
+
             <td>
                 <strong>
                   <bean:message key="billing.servicedate.starttime"/>
-                </strong>
-              <table cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td>
-                    <select name="xml_starttime_hr"><%=generateNumericOptionList(24, bean.getStartTimeHr())%>                    </select>
+                </strong></td>
+                <td>
+
+                  <html:text property="service_to_date" size="10" readonly="readonly" maxlength="2" styleId="start_time" value=""/>
+                    
+                    <%-- <select name="xml_starttime_hr"><%=generateNumericOptionList(24, bean.getStartTimeHr())%>                    </select> 
                   </td>
                   <td>
-                    <select name="xml_starttime_min"><%=generateNumericOptionList(61,bean.getStartTimeMin())%>                    </select>
-                  </td>
-                </tr>
-              </table>
-            </td>
-            <td>
-                <strong>
+                    <select name="xml_starttime_min"><%=generateNumericOptionList(61,bean.getStartTimeMin())%>                    </select>--%>
+          </td><td>
+               <strong>
                   <bean:message key="billing.servicedate.endtime"/>
                 </strong>
-              <table cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td>
+                </td><td>
+                <html:text property="service_to_date" size="10" readonly="readonly" maxlength="2" styleId="end_time"/>
+                <%--
                     <select name="xml_endtime_hr"><%=generateNumericOptionList(24,bean.getEndTimeHr())%>                    </select>
-                  </td>
-                  <td>
                     <select name="xml_endtime_min"><%=generateNumericOptionList(61,bean.getEndTimeMin())%>                    </select>
-                  </td>
-                </tr>
-              </table>
+            --%>
             </td>
-            <td>              Dependent:
+           
+            </tr>
+            <tr>
+            <td>       <strong>       Dependent:</strong>
+            </td><td>
               <html:select property="dependent">
                 <html:option value="00">No</html:option>
                 <html:option value="66">Yes</html:option>
               </html:select>
             </td>
-            <td title="Submission Code">              Sub Code:
-              <html:select property="submissionCode">
+            <td title="Submission Code">       <strong>           Sub Code:</strong>
+            </td><td>
+              <html:select property="submissionCode" styleClass="compress">
                 <html:option value="0">O - Normal</html:option>
                 <html:option value="D">D - Duplicate</html:option>
                 <html:option value="E">E - Debit</html:option>
@@ -1098,6 +1162,7 @@ if(wcbneeds != null){%>
             </td>
             <td>
                 <b>Payment Method:</b>
+                </td><td>
             <%
               ArrayList types = billform.getPaymentTypes();
               if ("Pri".equalsIgnoreCase(thisForm.getXml_billtype())) {
@@ -1124,14 +1189,34 @@ if(wcbneeds != null){%>
                 <html:options collection="paymentMethodList" property="id" labelProperty="paymentType"/>
               </html:select>
             </td>
-            <td nowrap>
+
+            </tr>
+            <tr>
+            <td nowrap style="height:50px;">
               <a href="javascript: function myFunction() {return false; }" onClick="checkFACILITY();">
-                  <strong>Facility</strong>
+                  <strong>Facility </strong>
               </a>
-              <span style="display: none;" id="FACILITY">  <table>  <tr>   <td title="Facilty Num">  Fac Num <html:text property="facilityNum" size="5" maxlength="5"/>  </td>   <td title="Facilty Sub Num">  Fac Sub Num <html:text property="facilitySubNum" size="5" maxlength="5"/>  </td>  </tr>  </table>  </span>
+             
+</td>
+
+<td>
+ <span style="display: none;" id="FACILITY">  
+              <table>  <tr>   <td title="Facilty Num"><b>  Fac Num </b></br>
+              <html:text property="facilityNum" size="5" maxlength="5"/>  </td>   <td title="Facilty Sub Num">  <b>Fac Sub Num </b></br><html:text property="facilitySubNum" size="5" maxlength="5"/>  </td>  </tr> 
+
+               </table>  </span>
             </td>
           </tr>
         </table>
+        </br>
+        <!--
+          <table>
+          <tr>
+          <td>Service Date:</td>    <td>	 Service to date: </td>  <td> 	 After Hours: </td>  <td>	 Time Call (HHMM 24hr): </td>  <td> 	 Start (HHMM 24hr): </td>  <td> 	 End (HHMM 24hr): </td>   <td>	 Dependent: </td>  <td>	 Sub Code: </td>  <td>	 Alt. Payment:</td>
+          </tr>
+          </table>
+        -->
+       
         <div style="display: none">
           <table>
             <tr>
@@ -1192,7 +1277,7 @@ if(wcbneeds != null){%>
  </ul>
 
 <div class="container" id="tab1C"> 
-<table width="100%" border="0" cellspacing="0" cellpadding="0" height="67" bgcolor="">
+<table width="100%" border="0" cellspacing="0" cellpadding="0" height="67" bgcolor="" id="premium">
                       <tr>
                         <td width="85%">
                           <b><bean:message key="billing.service.otherservice"/></b>
@@ -1203,8 +1288,8 @@ if(wcbneeds != null){%>
                       </tr>
                       <tr>
                         <td nowrap>
-                            <html:text property="xml_other1" onblur="checkSelectedCodes()" size="40" onkeypress="return grabEnter(event,'OtherScriptAttach()')"/>
-                            <input type="button" value=".5" onClick="$('xml_other1_unit').value = '0.5'"/>
+                            <html:text property="xml_other1" onblur="checkSelectedCodes()" size="20" onkeypress="return grabEnter(event,'OtherScriptAttach()')"/>
+                            <input type="button" value=".5" onClick="changeValue('xml_other1_unit')"/>
                         </td>
                         <td>
                             <html:text property="xml_other1_unit" size="6" maxlength="6" styleId="xml_other1_unit"/>
@@ -1212,8 +1297,8 @@ if(wcbneeds != null){%>
                       </tr>
                       <tr>
                         <td nowrap>
-                            <html:text property="xml_other2" onblur="checkSelectedCodes()" size="40" onkeypress="return grabEnter(event,'OtherScriptAttach()')"/>
-                            <input type="button" value=".5" onClick="$('xml_other2_unit').value = '0.5'"/>
+                            <html:text property="xml_other2" onblur="checkSelectedCodes()" size="20" onkeypress="return grabEnter(event,'OtherScriptAttach()')"/>
+                            <input type="button" value=".5" onClick="changeValue('xml_other2_unit')"/>
                         </td>
                         <td>
                             <html:text property="xml_other2_unit" size="6" maxlength="6" styleId="xml_other2_unit"/>
@@ -1221,57 +1306,47 @@ if(wcbneeds != null){%>
                       </tr>
                       <tr>
                         <td nowrap>
-                            <html:text property="xml_other3" onblur="checkSelectedCodes()" size="40" onkeypress="return grabEnter(event,'OtherScriptAttach()')"/>
-                            <input type="button" value=".5" onClick="$('xml_other3_unit').value = '0.5'"/>
+                            <html:text property="xml_other3" onblur="checkSelectedCodes()" size="20" onkeypress="return grabEnter(event,'OtherScriptAttach()')"/>
+                            <input type="button" value=".5" onClick="changeValue('xml_other3_unit')"/>
                         </td>
                         <td>
                             <html:text property="xml_other3_unit" size="6" maxlength="6" styleId="xml_other3_unit"/>
                         </td>
                       </tr>
-                      <tr>
-                        <td colspan="2">
-                          <a href="javascript:OtherScriptAttach()">
+
+                      </table>
+                      <a href="#" style="text-decoration:underline;" onClick="appendText()">Add Codes</a>
+                          <a href="javascript:OtherScriptAttach()" >
                             <input type="button" value="Code Search"/>
                           </a>
-                        </td>
-                      </tr>
-                    </table>
-               
-                 
-                 <!-- DIAGNOSTIC CODE -->
-                   <table width="100%"  bgcolor="">
-                <tr>
-                  <td  height="103" valign="top" width="10">
-                    <table  cellspacing="0" cellpadding="0" height="67" bgcolor="">
+                      <table>
                       <tr>
-                        <th align="left">
+                        <td align="left">
                               <a href="#" id="pop2" onClick="formPopup(this.id,'Layer2');return false;">
                                 <bean:message key="billing.diagnostic.code"/>
                               </a>   
-                        </th>
-                      </tr>
-                      <tr>
-                        <td>
-                            <html:text property="xml_diagnostic_detail1" size="25" onkeypress="return grabEnter(event,'ScriptAttach()')"/>
                         </td>
                       </tr>
                       <tr>
                         <td>
-                            <html:text property="xml_diagnostic_detail2" size="25" onkeypress="return grabEnter(event,'ScriptAttach()')"/>
+                            <html:text property="xml_diagnostic_detail1" size="20" onkeypress="return grabEnter(event,'ScriptAttach()')"/>
                         </td>
                       </tr>
                       <tr>
                         <td>
-                            <html:text property="xml_diagnostic_detail3" size="25" onkeypress="return grabEnter(event,'ScriptAttach()')"/>
+                            <html:text property="xml_diagnostic_detail2" size="20" onkeypress="return grabEnter(event,'ScriptAttach()')"/>
                         </td>
                       </tr>
                       <tr>
                         <td>
+                            <html:text property="xml_diagnostic_detail3" size="20" onkeypress="return grabEnter(event,'ScriptAttach()')"/>
+                        </td>
+                      </tr>
+                      </table>
+                      <a href="#" style="text-decoration:underline;">Add Codes</a>
                             <a href="javascript:ScriptAttach()"><input type="button" value="Code Search"/></a> 
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
+                    <table> 
+           <tr>
                   <td align="left" width="*" valign="top">
                       <div id="DX_REFERENCE"></div>
                        <oscar:oscarPropertiesCheck property="BILLING_DX_REFERENCE" value="yes">
@@ -1352,6 +1427,14 @@ if(wcbneeds != null){%>
                       </tr>
                     </table></div>
 <table width="40%" border="0" cellspacing="0" cellpadding="0" style="float:right;">
+<tr>
+<td>
+   <div style="background-color: ;">
+                      <div style="background-color : ">Billing History</div>
+                      &nbsp;
+                      <html:textarea cols="60" rows="5" property="messageNotes">                      </html:textarea>
+                    </div>
+                  </td></tr>
                 <tr>
                   <td >
                     <font size="-2">
@@ -1390,8 +1473,8 @@ if(wcbneeds != null){%>
                     <!-- br/>
                     <br/ -->
                     <div style="background-color: ;">
-                      <div style="background-color : #EEEEFF;">Billing Notes (Notes are for internal use and will not be sent to MSP)</div>
-                      &nbsp;
+                      <div style="">Billing Notes (Notes are for internal use and will not be sent to MSP)</div>
+                      
                       <html:textarea cols="60" rows="5" property="messageNotes">                      </html:textarea>
                     </div>
                   </td></tr>
@@ -1654,11 +1737,11 @@ if(wcbneeds != null){%>
                   <td  height="103" valign="top" width="10">
                     <table border="2" cellspacing="0" cellpadding="0" height="67" bgcolor="">
                       <tr>
-                        <th align="left">
+                        <td align="left">
                               <a href="#" id="pop2" onClick="formPopup(this.id,'Layer2');return false;">
                                 <bean:message key="billing.diagnostic.code"/>
                               </a>   
-                        </th>
+                        </td>
                       </tr>
                       <tr>
                         <td>
